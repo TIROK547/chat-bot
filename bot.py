@@ -258,7 +258,7 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hijri_str = f"{hijri.year}/{hijri.month:02}/{hijri.day:02}"
 
     # Weather
-    WEATHER_API_KEY = "YOUR_API_KEY"  # Replace with actual API key
+    WEATHER_API_KEY = "bb77d86a66d5363f985cbf48fe5959ef"  # Replace with actual API key
     city = "Tehran"
     url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={WEATHER_API_KEY}&units=metric&lang=fa"
     
