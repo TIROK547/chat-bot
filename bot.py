@@ -68,9 +68,10 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
             "blocked": False
         }
     else:
-        users[chat_id]["message_count"] += 1
+        users[chat_id]["message_count"] = users[chat_id].get("message_count", 0) + 1
         users[chat_id]["username"] = user.username
         users[chat_id]["first_name"] = user.first_name
+
 
     save_users(users)
     recent_messages[int(chat_id)] = message.message_id
@@ -82,7 +83,8 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"📝 Messages sent: {users[chat_id]['message_count']}"
     )
     await context.bot.send_message(chat_id=ADMIN_ID, text=header, reply_markup=ForceReply(selective=True))
-
+    await update.message.reply_text("✅ Message sent to the user.")
+    
     # Forward message content
     if not await send_message_by_type(context.bot, ADMIN_ID, message):
         await context.bot.send_message(chat_id=ADMIN_ID, text="📎 Unsupported message type.")
