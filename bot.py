@@ -129,6 +129,25 @@ async def admin_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             msg = "هیچ کاربر بلاک‌شده‌ای وجود نداره ✅"
         await query.message.reply_text(msg)
 
+#get prices
+def get_prices():
+    try:
+        btc_res = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd")
+        btc_price = btc_res.json().get("bitcoin", {}).get("usd", "❓")
+
+        # دلار و طلا از tgju.org (Scraping ساده)
+        tgju_res = requests.get("https://api.codebazan.ir/dollar-gold/")
+        tgju_data = tgju_res.json()
+
+        usd_price = tgju_data.get("dollar", "❓")
+        gold_price = tgju_data.get("sekeb", "❓")  # سکه امامی
+
+        return usd_price, gold_price, btc_price
+
+    except Exception as e:
+        print("⚠️ Price Fetch Error:", e)
+        return "❌", "❌", "❌"
+
 # === Handler: Admin Reply ===
 async def handle_admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message:
@@ -280,14 +299,14 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Admin Panel Message
     text = (
         "<b>TIROK ADMIN PANEL</b> ✨\n\n"
-        "📆 <b>تاریخ‌ها:</b>\n"
-        f"📅 میلادی: {now.strftime('%Y/%m/%d')}\n"
+        "<b>تاریخ‌ها:</b>\n"
+        f"🇺🇸 میلادی: {now.strftime('%Y/%m/%d')}\n"
         f"🇮🇷 شمسی: {jalali}\n\n"
         "🌦 <b>آب‌وهوا - تهران:</b>\n"
         f"🌤 امروز: {today_weather_str}\n"
         f"🌥 فردا: {tomorrow_weather_str}"
     )
-
+    print(get_prices())
     await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
 # === Bot Setup ====
