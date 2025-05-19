@@ -265,6 +265,8 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = requests.get(url)
     weather_data = response.json()
 
+    print("🔍 weather_data:", weather_data)
+    
     now_weather = weather_data['list'][0]
     today_temp = now_weather['main']['temp']
     today_desc = now_weather['weather'][0]['description']
