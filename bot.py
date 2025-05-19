@@ -8,6 +8,7 @@ import requests
 import jdatetime
 from hijri_converter import convert
 from datetime import datetime
+from prices import get_all_prices_text
 
 # === Config ===
 BOT_TOKEN = "8042159885:AAHkCyakSH4cug9nSCC2r4DD7-MMK8GVloM"
@@ -129,24 +130,38 @@ async def admin_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             msg = "هیچ کاربر بلاک‌شده‌ای وجود نداره ✅"
         await query.message.reply_text(msg)
 
-#get prices
-def get_prices():
+#get weather
+
+def get_weather_summary(city="Tehran", api_key="YOUR_API_KEY"):
+    url = (
+        f"https://api.openweathermap.org/data/2.5/forecast"
+        f"?q={city}&appid={api_key}&units=metric&lang=fa"
+    )
+    response = requests.get(url)
+    weather_data = response.json()
+
+    if "list" not in weather_data:
+        print("❌ Failed to get forecast:", weather_data)
+        return None, None
+    
+    print("accessed weather api successfully👌")
+    
     try:
-        btc_res = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd")
-        btc_price = btc_res.json().get("bitcoin", {}).get("usd", "❓")
+        now_weather = weather_data['list'][0]
+        today_temp = now_weather['main']['temp']
+        today_desc = now_weather['weather'][0]['description']
+        today_summary = f"{today_temp}°C | {today_desc}"
 
-        # دلار و طلا از tgju.org (Scraping ساده)
-        tgju_res = requests.get("https://api.codebazan.ir/dollar-gold/")
-        tgju_data = tgju_res.json()
+        tomorrow_weather = weather_data['list'][8]
+        tomorrow_temp = tomorrow_weather['main']['temp']
+        tomorrow_desc = tomorrow_weather['weather'][0]['description']
+        tomorrow_summary = f"{tomorrow_temp}°C | {tomorrow_desc}"
 
-        usd_price = tgju_data.get("dollar", "❓")
-        gold_price = tgju_data.get("sekeb", "❓")  # سکه امامی
+        return today_summary, tomorrow_summary
 
-        return usd_price, gold_price, btc_price
-
-    except Exception as e:
-        print("⚠️ Price Fetch Error:", e)
-        return "❌", "❌", "❌"
+    except (KeyError, IndexError) as e:
+        print("⚠️ Parsing weather failed:", e)
+        return None, None
 
 # === Handler: Admin Reply ===
 async def handle_admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -277,24 +292,11 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hijri_str = f"{hijri.year}/{hijri.month:02}/{hijri.day:02}"
 
     # Weather
-    WEATHER_API_KEY = "bb77d86a66d5363f985cbf48fe5959ef"  # Replace with actual API key
-    city = "Tehran"
-    url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={WEATHER_API_KEY}&units=metric&lang=fa"
-    
-    response = requests.get(url)
-    weather_data = response.json()
+    WEATHER_API_KEY = "bb77d86a66d5363f985cbf48fe5959ef"
+    today_weather_str, tomorrow_weather_str = get_weather_summary(
+    city="Tehran", api_key="bb77d86a66d5363f985cbf48fe5959ef"
+    )
 
-    print("🔍 weather_data:", weather_data)
-    
-    now_weather = weather_data['list'][0]
-    today_temp = now_weather['main']['temp']
-    today_desc = now_weather['weather'][0]['description']
-    today_weather_str = f"{today_temp}°C | {today_desc}"
-
-    tomorrow_weather = weather_data['list'][8]
-    tomorrow_temp = tomorrow_weather['main']['temp']
-    tomorrow_desc = tomorrow_weather['weather'][0]['description']
-    tomorrow_weather_str = f"{tomorrow_temp}°C | {tomorrow_desc}"
 
     # Admin Panel Message
     text = (
@@ -302,11 +304,12 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "<b>تاریخ‌ها:</b>\n"
         f"🇺🇸 میلادی: {now.strftime('%Y/%m/%d')}\n"
         f"🇮🇷 شمسی: {jalali}\n\n"
-        "🌦 <b>آب‌وهوا - تهران:</b>\n"
+        "<b>آب‌وهوا - تهران:</b>\n"
         f"🌤 امروز: {today_weather_str}\n"
-        f"🌥 فردا: {tomorrow_weather_str}"
+        f"🌥 فردا: {tomorrow_weather_str}\n"
+        f"{get_all_prices_text}"
     )
-    print(get_prices())
+    
     await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
 # === Bot Setup ====
