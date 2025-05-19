@@ -4,6 +4,10 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters, CallbackQueryHandler
 )
+import requests
+import jdatetime
+from hijri_converter import convert
+from datetime import datetime
 
 # === Config ===
 BOT_TOKEN = "8042159885:AAHkCyakSH4cug9nSCC2r4DD7-MMK8GVloM"
@@ -209,7 +213,7 @@ async def unblock_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users[user_id]["blocked"] = False
     save_users(users)
     await update.message.reply_text(f"✅ User {user_id} has been unblocked.")
-
+    
 # === Handler: Start ===
 async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
@@ -218,29 +222,71 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     print(f"🚀 /start from {chat_id} (@{user.username})")
 
-    if update.effective_user.id != ADMIN_ID and chat_id not in users:
-        users[chat_id] = {
-            "username": user.username,
-            "first_name": user.first_name,
-            "message_count": 1,
-            "blocked": False
-        }
-        save_users(users)
-        print(f"🆕 Registered new user from /start: {chat_id}")
-        await update.message.reply_text("سلام علیکم✨ \nازین به بعد پیامی بدی به صورت ناشناس برای حاجیتون ارسال میشه👀")
-        return
-    elif update.effective_user.id != ADMIN_ID and chat_id in users:
-        await update.message.reply_text("کصخل قبلا باتو استارت کردی")
+    # ==== Non-admin users ====
+    if update.effective_user.id != ADMIN_ID:
+        if chat_id not in users:
+            users[chat_id] = {
+                "username": user.username,
+                "first_name": user.first_name,
+                "message_count": 1,
+                "blocked": False
+            }
+            save_users(users)
+            print(f"🆕 Registered new user from /start: {chat_id}")
+            await message.reply_text(
+                "سلام علیکم ✨\n"
+                "از این به بعد پیامی بدی، به صورت ناشناس برای حاجیتون ارسال میشه 👀"
+            )
+        else:
+            await message.reply_text("کصخل قبلاً باتو استارت کردی ")
         return
 
+    # ==== Admin Panel ====
     print("🛠 Admin accessed the bot.")
+
+    # Keyboard buttons
     keyboard = [
         [InlineKeyboardButton("👥 لیست کاربران", callback_data="list_users")],
-        [InlineKeyboardButton("📛 لیست بلاک‌شده‌ها", callback_data="blocked_users")],
+        [InlineKeyboardButton("🚫 لیست بلاک‌شده‌ها", callback_data="blocked_users")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text("اعلی حضرت خوش برگشتی", reply_markup=reply_markup)
+    # Dates
+    now = datetime.now()
+    jalali = jdatetime.datetime.now().strftime("%Y/%m/%d")
+    hijri = convert.Gregorian(now.year, now.month, now.day).to_hijri()
+    hijri_str = f"{hijri.year}/{hijri.month:02}/{hijri.day:02}"
+
+    # Weather
+    WEATHER_API_KEY = "YOUR_API_KEY"  # Replace with actual API key
+    city = "Tehran"
+    url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={WEATHER_API_KEY}&units=metric&lang=fa"
+    
+    response = requests.get(url)
+    weather_data = response.json()
+
+    now_weather = weather_data['list'][0]
+    today_temp = now_weather['main']['temp']
+    today_desc = now_weather['weather'][0]['description']
+    today_weather_str = f"{today_temp}°C | {today_desc}"
+
+    tomorrow_weather = weather_data['list'][8]
+    tomorrow_temp = tomorrow_weather['main']['temp']
+    tomorrow_desc = tomorrow_weather['weather'][0]['description']
+    tomorrow_weather_str = f"{tomorrow_temp}°C | {tomorrow_desc}"
+
+    # Admin Panel Message
+    text = (
+        "<b>TIROK ADMIN PANEL</b> ✨\n\n"
+        "📆 <b>تاریخ‌ها:</b>\n"
+        f"📅 میلادی: {now.strftime('%Y/%m/%d')}\n"
+        f"🇮🇷 شمسی: {jalali}\n\n"
+        "🌦 <b>آب‌وهوا - تهران:</b>\n"
+        f"🌤 امروز: {today_weather_str}\n"
+        f"🌥 فردا: {tomorrow_weather_str}"
+    )
+
+    await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
 # === Bot Setup ====
 app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -248,10 +294,10 @@ app = ApplicationBuilder().token(BOT_TOKEN).build()
 # Handlers
 app.add_handler(CallbackQueryHandler(admin_menu_handler))
 app.add_handler(CommandHandler("start", started))
-app.add_handler(MessageHandler(filters.User(ADMIN_ID) & filters.REPLY, handle_admin_reply))
-app.add_handler(MessageHandler(filters.ALL & ~filters.User(ADMIN_ID), handle_user_message))
 app.add_handler(CommandHandler("block", block_user))
 app.add_handler(CommandHandler("unblock", unblock_user))
+app.add_handler(MessageHandler(filters.User(ADMIN_ID) & filters.REPLY, handle_admin_reply))
+app.add_handler(MessageHandler(filters.ALL & ~filters.User(ADMIN_ID), handle_user_message))
 
 # Run bot
 print("🤖 Bot is starting...")
