@@ -299,6 +299,11 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     # Admin Panel Message
+    try:
+        prices_text = get_all_prices_text()
+    except Exception as e:
+        prices_text = "❌ دریافت قیمت‌ها ممکن نبود.\n"
+
     text = (
         "<b>TIROK ADMIN PANEL</b> ✨\n\n"
         "<b>تاریخ‌ها:</b>\n"
@@ -306,10 +311,10 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🇮🇷 شمسی: {jalali}\n\n"
         "<b>آب‌وهوا - تهران:</b>\n"
         f"🌤 امروز: {today_weather_str}\n"
-        f"🌥 فردا: {tomorrow_weather_str}\n"
-        f"{get_all_prices_text}"
+        f"🌥 فردا: {tomorrow_weather_str}\n\n"
+        f"{prices_text}"
     )
-    
+
     await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
 # === Bot Setup ====
