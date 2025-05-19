@@ -166,12 +166,12 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 # Handlers
+app.add_handler(CommandHandler("start", started))
 app.add_handler(MessageHandler(filters.User(ADMIN_ID) & filters.REPLY, handle_admin_reply))
 app.add_handler(MessageHandler(filters.ALL & ~filters.User(ADMIN_ID), handle_user_message))
 app.add_handler(CommandHandler("users", list_users))
 app.add_handler(CommandHandler("block", block_user))
 app.add_handler(CommandHandler("unblock", unblock_user))
-app.add_handler(CommandHandler("start", started))
 
 # Run bot
 app.run_polling()
