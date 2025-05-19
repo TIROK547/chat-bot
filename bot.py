@@ -156,6 +156,12 @@ async def unblock_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_users(users)
     await update.message.reply_text(f"✅ User {user_id} has been unblocked.")
 
+async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id == ADMIN_ID:
+        await update.message.reply_text("اعلی حضرت خوش برگشتی")
+        return
+    await update.message.reply_text("سلام علیکم! \nازین به بعد پیامی بدی به صورت ناشناس برای حاجیتون ارسال میشه")
+
 # === Bot Setup ===
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -165,6 +171,7 @@ app.add_handler(MessageHandler(filters.ALL & ~filters.User(ADMIN_ID), handle_use
 app.add_handler(CommandHandler("users", list_users))
 app.add_handler(CommandHandler("block", block_user))
 app.add_handler(CommandHandler("unblock", unblock_user))
+app.add_handler(CommandHandler("start", started))
 
 # Run bot
 app.run_polling()
