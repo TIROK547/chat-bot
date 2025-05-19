@@ -1,7 +1,11 @@
 {
-  "7165983303": { "username": "Tiiiiiiiiiids", "first_name": "Guess who?" },
+  "7165983303": {
+    "username": "Tiiiiiiiiiids",
+    "first_name": "Guess who?"
+  },
   "461299220": {
     "username": "TIROK547",
-    "first_name": "\ud835\udc7b\ud835\udc70\ud835\udc79\ud835\udc76\ud835\udc72"
+    "first_name": "\ud835\udc7b\ud835\udc70\ud835\udc79\ud835\udc76\ud835\udc72",
+    "message_count": 6
   }
 }
