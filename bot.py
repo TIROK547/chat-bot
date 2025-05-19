@@ -242,7 +242,7 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("اعلی حضرت خوش برگشتی", reply_markup=reply_markup)
 
-# === Bot Setup ===
+# === Bot Setup ====
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 # Handlers
