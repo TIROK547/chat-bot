@@ -160,7 +160,7 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id == ADMIN_ID:
         await update.message.reply_text("اعلی حضرت خوش برگشتی")
         return
-    await update.message.reply_text("سلام علیکم! \nازین به بعد پیامی بدی به صورت ناشناس برای حاجیتون ارسال میشه")
+    await update.message.reply_text("سلام علیکم✨ \nازین به بعد پیامی بدی به صورت ناشناس برای حاجیتون ارسال میشه👀")
 
 # === Bot Setup ===
 app = ApplicationBuilder().token(BOT_TOKEN).build()
