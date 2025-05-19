@@ -49,6 +49,7 @@ async def send_message_by_type(bot, chat_id, message, reply_to_message_id=None):
 
 # === Handler: User Message ===
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(f"Received message from user {update.message.from_user.id}: {update.message.text or update.message.caption}")
     message = update.message
     user = message.from_user
     chat_id = str(message.chat_id)
