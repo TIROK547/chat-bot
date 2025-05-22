@@ -38,7 +38,7 @@ def get_all_prices_text():
             "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
         ).json()
         btc_usd_value = btc_usd_res.get("bitcoin", {}).get("usd", "N/A")
-        btc_text = f"<b>بیت‌کوین:</b>\n🪙 {btc_usd_value} <b>دلار</b> ₿\n"
+        btc_text = f"<b>بیت‌کوین:</b>\n🪙 {btc_usd_value} <b>دلار</b>\n"
     except:
         pass
 
