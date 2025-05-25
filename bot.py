@@ -89,6 +89,7 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     recent_messages[int(chat_id)] = message.message_id
 
     header = (
+        f"👀 User name: {user.first_name or 'Null'} {user.last_name or ''}"
         f"📩 Message from: @{user.username or 'NoUsername'}\n"
         f"👤 User ID: {chat_id}\n"
         f"📝 Messages sent: {users[chat_id]['message_count']}"
@@ -97,8 +98,6 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     if chat_id == "6283893454":
         await update.message.reply_text("حیف فامیلی")
-    elif chat_id == "1873909525":
-        await update.message.reply_text("عرشیا کص ننت " * 100)
 
     await update.message.reply_text("✅ پیام رفت برا اقا ایلیا")
 
