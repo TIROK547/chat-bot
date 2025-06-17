@@ -1,9 +1,10 @@
 import json
 import re
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, InputFile
 from telegram.ext import (
     ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters, CallbackQueryHandler
 )
+from telegram.constants import ParseMode
 import requests
 import jdatetime
 from hijri_converter import convert
@@ -11,7 +12,7 @@ from datetime import datetime
 from prices import get_all_prices_text
 
 # === Config ===
-BOT_TOKEN = "8042159885:AAHkCyakSH4cug9nSCC2r4DD7-MMK8GVloM"
+BOT_TOKEN = "7871738259:AAFV1SdnSQ0sezHeVlUWDEKz6p-Z2Oyfbp8"
 ADMIN_ID = 461299220
 
 # === Load / Save Users ===
@@ -128,6 +129,29 @@ async def admin_menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         if not found:
             msg = "هیچ کاربر بلاک‌شده‌ای وجود نداره ✅"
         await query.message.reply_text(msg)
+        
+    elif query.data == "get_json":
+        with open("users.json", "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+
+        await query.message.reply_document(InputFile("users.json"), filename="users.json")
+
+        json_str = json.dumps(users, ensure_ascii=False, indent=2)
+        if len(json_str) < 4096:
+            await query.message.reply_text(f"```json\n{json_str}\n```", parse_mode=ParseMode.MARKDOWN)
+        else:
+            await query.message.reply_text("⚠️ متن JSON بیشتر از ۴۰۹۶ کاراکتره و فقط فایل فرستاده شد.")
+    
+    elif query.data == "update_json":
+        await query.message.reply_text(
+            "To update the user data:\n"
+            "1. Send a JSON file\n"
+            "or\n"
+            "2. Send a text formatted like the user list.\n"
+            "The bot will automatically process and update the data after receiving it."
+        )
+        context.user_data["awaiting_user_data_update"] = True
+
 
 #get weather
 
@@ -264,6 +288,7 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "message_count": 1,
                 "blocked": False
             }
+
             save_users(users)
             print(f"🆕 Registered new user from /start: {chat_id}")
             await message.reply_text(
@@ -281,6 +306,8 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("👥 لیست کاربران", callback_data="list_users")],
         [InlineKeyboardButton("🚫 لیست بلاک‌شده‌ها", callback_data="blocked_users")],
+        [InlineKeyboardButton("📥 دریافت فایل JSON", callback_data="get_json")],
+        [InlineKeyboardButton("💾 آپدیت فایل JSON", callback_data="update_json")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -316,6 +343,57 @@ async def started(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.reply_text(text, reply_markup=reply_markup, parse_mode="HTML")
 
+async def update_users_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.user_data.get("awaiting_user_data_update"):
+        return
+
+    if update.message.document:
+        file = await update.message.document.get_file()
+        file_path = "users.json"
+        await file.download_to_drive(file_path)
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                new_data = json.load(f)
+            users.update(new_data)
+            save_users(users)
+            await update.message.reply_text("✅ successful")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error while loading JSON:\n{e}")
+            
+    elif update.message.text:
+        try:
+            text = update.message.text.strip()
+            lines = text.split("\n")
+            new_users = {}
+            current = {}
+
+            for i in range(len(lines)):
+                line = lines[i].strip()
+                if line.startswith("👥") or line == "":
+                    continue
+                if "( @" in line:
+                    name = line.split(" (")[0].strip()
+                    username = line.split("@")[1].split(")")[0].strip()
+                    current["first_name"] = name
+                    current["username"] = None if username == "N/A" else username
+                elif line.startswith("ID:"):
+                    current["id"] = int(line.replace("ID:", "").strip())
+                elif line.startswith("Messages:"):
+                    parts = line.replace("Messages:", "").strip().split()
+                    current["message_count"] = int(parts[0])
+                    current["blocked"] = "BLOCKED" in line
+                    new_users[current["id"]] = current
+                    current = {}
+
+            users.update(new_users)
+            save_users(users)
+            await update.message.reply_text("✅ Users updated successfully from formatted text.")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error parsing text:\n{e}")
+    print("Users json file was changed")
+    context.user_data["awaiting_user_data_update"] = False
+
 # === Bot Setup ====
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -326,6 +404,10 @@ app.add_handler(CommandHandler("block", block_user))
 app.add_handler(CommandHandler("unblock", unblock_user))
 app.add_handler(MessageHandler(filters.User(ADMIN_ID) & filters.REPLY, handle_admin_reply))
 app.add_handler(MessageHandler(filters.ALL & ~filters.User(ADMIN_ID), handle_user_message))
+app.add_handler(MessageHandler(
+    filters.User(ADMIN_ID) & (filters.TEXT | filters.Document.ALL),
+    update_users_data_handler
+))
 
 # Run bot
 print("🤖 Bot is starting...")
