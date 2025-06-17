@@ -97,9 +97,6 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     await context.bot.send_message(chat_id=ADMIN_ID, text=header)
 
-    if chat_id == "6283893454":
-        await update.message.reply_text("حیف فامیلی")
-
     await update.message.reply_text("✅ پیام رفت برا اقا ایلیا")
 
     if not await send_message_by_type(context.bot, ADMIN_ID, message):
