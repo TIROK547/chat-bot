@@ -383,7 +383,7 @@ async def update_users_data_handler(update: Update, context: ContextTypes.DEFAUL
                     new_users[current["id"]] = current
                     current = {}
 
-            users.update(new_users)
+            users = new_users
             save_users(users)
             await update.message.reply_text("✅ Users updated successfully from formatted text.")
         except Exception as e:
